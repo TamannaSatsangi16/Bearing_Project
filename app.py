@@ -1,8 +1,9 @@
 import streamlit as st
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from PIL import Image
+import pandas as pd
+from datetime import datetime
 import os
 
 # ---------------------------------
@@ -11,20 +12,19 @@ import os
 
 from backend.image_processing import (
     process_image,
-    detect_hotspots,
-    detect_edges
+    detect_hotspots
 )
 
 from backend.analysis import (
     analyze_image
 )
 
-from backend.predict import (
-    predict_bearing
-)
-
 from backend.recommendations import (
     get_recommendation
+)
+
+from backend.predict import (
+    predict_bearing
 )
 
 # ---------------------------------
@@ -73,32 +73,44 @@ uploaded_file = st.file_uploader(
 )
 
 # ---------------------------------
-# PROCESS IMAGE
+# MAIN PROCESSING
 # ---------------------------------
 
 if uploaded_file is not None:
 
-    # Read image
-    image = Image.open(
-        uploaded_file
+    # Open image
+    image = Image.open(uploaded_file)
+
+    # Convert to numpy array
+    img = np.array(image)
+
+    # Create uploads folder
+    os.makedirs(
+        "uploads",
+        exist_ok=True
     )
 
-    image_np = np.array(
-        image
-    )
+    # Save uploaded image
+    image_path = f"uploads/{uploaded_file.name}"
+
+    with open(
+        image_path,
+        "wb"
+    ) as f:
+
+        f.write(
+            uploaded_file.getbuffer()
+        )
 
     # ---------------------------------
     # IMAGE PROCESSING
     # ---------------------------------
 
-    gray = process_image(
-        image_np
+    img_rgb, gray, edges = process_image(
+        img
     )
 
-    edges = detect_edges(
-        gray
-    )
-
+    # Hotspot detection
     hotspot, dynamic_threshold = detect_hotspots(
         gray,
         sensitivity
@@ -118,24 +130,110 @@ if uploaded_file is not None:
     # ---------------------------------
 
     prediction, confidence = predict_bearing(
-        image_np
+        img_rgb
     )
 
     # ---------------------------------
-    # AI PREDICTION DISPLAY
+    # RECOMMENDATION
+    # ---------------------------------
+
+    recommendation = get_recommendation(
+        results["status"]
+    )
+
+    # ---------------------------------
+    # SAVE HISTORY
+    # ---------------------------------
+
+    history = {
+
+        "Timestamp": datetime.now(),
+
+        "Image": uploaded_file.name,
+
+        "Prediction": prediction,
+
+        "Confidence": confidence,
+
+        "Severity": results["severity"],
+
+        "Status": results["status"]
+    }
+
+    history_df = pd.DataFrame([history])
+
+    if os.path.exists("history.csv"):
+
+        history_df.to_csv(
+            "history.csv",
+            mode='a',
+            header=False,
+            index=False
+        )
+
+    else:
+
+        history_df.to_csv(
+            "history.csv",
+            index=False
+        )
+
+    # ---------------------------------
+    # ORIGINAL IMAGE
+    # ---------------------------------
+
+    st.subheader(
+        "Original Thermal Image"
+    )
+
+    st.image(
+        img_rgb,
+        use_container_width=True
+    )
+
+    # ---------------------------------
+    # AI PREDICTION
     # ---------------------------------
 
     st.subheader(
         "AI Prediction"
     )
 
-    st.success(
+    st.write(
         f"Prediction Result: {prediction}"
     )
 
-    st.info(
+    st.write(
         f"Confidence: {confidence:.2f}%"
     )
+
+    # ---------------------------------
+    # PREDICTION STATUS
+    # ---------------------------------
+
+    if prediction == "Healthy":
+
+        st.success(
+            "HEALTHY BEARING"
+        )
+
+    elif prediction == "Old Used Bearing":
+
+        st.warning(
+            "OLD USED BEARING DETECTED"
+        )
+
+    elif prediction == "Iron Scrap Bearing":
+
+        st.error(
+            "IRON SCRAP / DAMAGED BEARING DETECTED"
+        )
+
+    elif prediction == "Ball Defect Bearing":
+
+        st.error(
+            "BALL DEFECT DETECTED"
+        )
 
     # ---------------------------------
     # ANALYSIS METRICS
@@ -147,65 +245,39 @@ if uploaded_file is not None:
 
     col1, col2, col3, col4, col5 = st.columns(5)
 
-    col1.metric(
-        "Average Intensity",
-        f"{results['avg_intensity']:.2f}"
-    )
+    with col1:
 
-    col2.metric(
-        "Maximum Intensity",
-        f"{results['max_intensity']}"
-    )
-
-    col3.metric(
-        "Minimum Intensity",
-        f"{results['min_intensity']}"
-    )
-
-    col4.metric(
-        "Severity %",
-        f"{results['severity']:.2f}%"
-    )
-
-    col5.metric(
-        "Dynamic Threshold",
-        f"{dynamic_threshold:.2f}"
-    )
-
-    # ---------------------------------
-    # THERMAL CONDITION
-    # ---------------------------------
-
-    st.subheader(
-        "Thermal Condition"
-    )
-
-    condition = results[
-        "thermal_condition"
-    ]
-
-    if condition == "COLD":
-
-        st.info(
-            condition
+        st.metric(
+            "Average Intensity",
+            f"{results['avg_intensity']:.2f}"
         )
 
-    elif condition == "NORMAL":
+    with col2:
 
-        st.success(
-            condition
+        st.metric(
+            "Maximum Intensity",
+            f"{results['max_intensity']}"
         )
 
-    elif condition == "HOT":
+    with col3:
 
-        st.warning(
-            condition
+        st.metric(
+            "Minimum Intensity",
+            f"{results['min_intensity']}"
         )
 
-    else:
+    with col4:
 
-        st.error(
-            condition
+        st.metric(
+            "Severity %",
+            f"{results['severity']:.2f}%"
+        )
+
+    with col5:
+
+        st.metric(
+            "Dynamic Threshold",
+            f"{dynamic_threshold:.2f}"
         )
 
     # ---------------------------------
@@ -216,9 +288,9 @@ if uploaded_file is not None:
         "System Status"
     )
 
-    if results["status"] == "NORMAL":
+    if results["status"] == "OVERHEATING DETECTED":
 
-        st.success(
+        st.error(
             results["status"]
         )
 
@@ -230,18 +302,13 @@ if uploaded_file is not None:
 
     else:
 
-        st.error(
+        st.success(
             results["status"]
         )
 
     # ---------------------------------
     # MAINTENANCE RECOMMENDATION
     # ---------------------------------
-
-    recommendation = get_recommendation(
-        prediction,
-        results["severity"]
-    )
 
     st.subheader(
         "Maintenance Recommendation"
@@ -252,7 +319,7 @@ if uploaded_file is not None:
     )
 
     # ---------------------------------
-    # IMAGE PROCESSING DISPLAY
+    # IMAGE PROCESSING RESULTS
     # ---------------------------------
 
     st.subheader(
@@ -293,11 +360,13 @@ if uploaded_file is not None:
         "Pixel Intensity Histogram"
     )
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(
+        figsize=(8,4)
+    )
 
     ax.hist(
         gray.ravel(),
-        bins=50
+        bins=256
     )
 
     ax.set_xlabel(
@@ -308,57 +377,21 @@ if uploaded_file is not None:
         "Frequency"
     )
 
-    st.pyplot(
-        fig
-    )
+    st.pyplot(fig)
 
     # ---------------------------------
-    # SAVE HISTORY
+    # HOTSPOT ANALYSIS
     # ---------------------------------
 
-    history_entry = {
-
-        "Image": uploaded_file.name,
-
-        "Prediction": prediction,
-
-        "Confidence": confidence,
-
-        "Severity": results["severity"],
-
-        "Status": results["status"]
-    }
-
-    history_df = pd.DataFrame(
-        [history_entry]
+    st.subheader(
+        "Hotspot Analysis"
     )
 
-    if os.path.exists(
-        "history.csv"
-    ):
-
-        old_history = pd.read_csv(
-            "history.csv"
-        )
-
-        updated_history = pd.concat(
-            [old_history, history_df],
-            ignore_index=True
-        )
-
-        updated_history.to_csv(
-            "history.csv",
-            index=False
-        )
-
-    else:
-
-        history_df.to_csv(
-            "history.csv",
-            index=False
-        )
-
-# ---------------------------------
+    st.write(
+        f"Hotspot Area Percentage: "
+        f"{results['hotspot_percentage']:.2f}%"
+    )
+    # ---------------------------------
 # ANALYSIS HISTORY
 # ---------------------------------
 
@@ -366,106 +399,99 @@ st.subheader(
     "Analysis History"
 )
 
-if os.path.exists(
+# Load history
+history_data = pd.read_csv(
     "history.csv"
+)
+
+# Show dataframe
+st.dataframe(
+    history_data,
+    use_container_width=True
+)
+
+# ---------------------------------
+# DELETE SINGLE RECORD
+# ---------------------------------
+
+st.subheader(
+    "Delete Single Record"
+)
+
+delete_index = st.number_input(
+
+    "Enter Row Number to Delete",
+
+    min_value=0,
+
+    max_value=max(
+        len(history_data)-1,
+        0
+    ),
+
+    step=1
+)
+
+if st.button(
+    "Delete Selected Record"
 ):
 
-    history_data = pd.read_csv(
-        "history.csv"
+    history_data = history_data.drop(
+        delete_index
     )
 
-    # ---------------------------------
-    # DELETE ALL BUTTON
-    # ---------------------------------
-
-    if st.button(
-        "🗑️ Delete All History"
-    ):
-
-        empty_df = pd.DataFrame(columns=[
-            "Image",
-            "Prediction",
-            "Confidence",
-            "Severity",
-            "Status"
-        ])
-
-        empty_df.to_csv(
-            "history.csv",
-            index=False
-        )
-
-        st.rerun()
-
-    st.write("---")
-
-    # ---------------------------------
-    # TABLE HEADER
-    # ---------------------------------
-
-    h1, h2, h3, h4, h5, h6 = st.columns(
-        [2,2,2,2,2,1]
+    history_data = history_data.reset_index(
+        drop=True
     )
 
-    h1.write("Image")
-    h2.write("Prediction")
-    h3.write("Confidence")
-    h4.write("Severity")
-    h5.write("Status")
-    h6.write("Delete")
+    history_data.to_csv(
+        "history.csv",
+        index=False
+    )
 
-    st.write("---")
+    st.success(
+        "Record Deleted Successfully"
+    )
 
+    st.rerun()
+
+# ---------------------------------
+# DELETE ALL HISTORY
+# ---------------------------------
+
+st.subheader(
+    "Delete Entire History"
+)
+
+if st.button(
+    "Delete All Records"
+):
+
+    # Empty dataframe
+    empty_df = pd.DataFrame(columns=[
+        "Timestamp",
+        "Image",
+        "Prediction",
+        "Confidence",
+        "Severity",
+        "Status"
+    ])
+
+    # Save empty CSV
+    empty_df.to_csv(
+        "history.csv",
+        index=False
+    )
+
+    st.success(
+        "All History Deleted Successfully"
+    )
+
+    st.rerun()
     # ---------------------------------
-    # SHOW ROWS
+    # FINAL SUCCESS MESSAGE
     # ---------------------------------
 
-    for index, row in history_data.iterrows():
-
-        c1, c2, c3, c4, c5, c6 = st.columns(
-            [2,2,2,2,2,1]
-        )
-
-        c1.write(
-            row["Image"]
-        )
-
-        c2.write(
-            row["Prediction"]
-        )
-
-        c3.write(
-            row["Confidence"]
-        )
-
-        c4.write(
-            row["Severity"]
-        )
-
-        c5.write(
-            row["Status"]
-        )
-
-        # ---------------------------------
-        # DELETE BUTTON
-        # ---------------------------------
-
-        if c6.button(
-            "🗑️",
-            key=f"delete_{index}"
-        ):
-
-            history_data = history_data.drop(
-                index
-            )
-
-            history_data = history_data.reset_index(
-                drop=True
-            )
-
-            history_data.to_csv(
-                "history.csv",
-                index=False
-            )
-
-            st.rerun()
+    st.success(
+        "Analysis Completed Successfully"
+    )
