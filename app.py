@@ -422,18 +422,20 @@ ax_rgb.set_ylabel(
 ax_rgb.legend()
 
 st.pyplot(fig_rgb)
-    # ---------------------------------
-    # HOTSPOT ANALYSIS
-    # ---------------------------------
 
-    st.subheader(
-        "Hotspot Analysis"
-    )
+# ---------------------------------
+# HOTSPOT ANALYSIS
+# ---------------------------------
 
-    st.write(
-        f"Hotspot Area Percentage: "
-        f"{results['hotspot_percentage']:.2f}%"
-    )
+st.subheader(
+    "Hotspot Analysis"
+)
+
+st.write(
+    f"Hotspot Area Percentage: "
+    f"{results['hotspot_percentage']:.2f}%"
+)
+
     # ---------------------------------
 # ANALYSIS HISTORY
 # ---------------------------------
