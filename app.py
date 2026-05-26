@@ -282,6 +282,42 @@ if uploaded_file is not None:
         )
 
     # ---------------------------------
+# THERMAL CONDITION
+# ---------------------------------
+
+st.subheader(
+    "Thermal Condition"
+)
+
+condition = results[
+    "thermal_condition"
+]
+
+if condition == "COLD":
+
+    st.info(
+        condition
+    )
+
+elif condition == "NORMAL":
+
+    st.success(
+        condition
+    )
+
+elif condition == "HOT":
+
+    st.warning(
+        condition
+    )
+
+else:
+
+    st.error(
+        condition
+    )
+
+    # ---------------------------------
     # SYSTEM STATUS
     # ---------------------------------
 
