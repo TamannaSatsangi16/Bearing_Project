@@ -4,30 +4,16 @@ import numpy as np
 # ANALYZE IMAGE
 # ---------------------------------
 
-def analyze_image(
-    gray,
-    hotspot
-):
+def analyze_image(gray, hotspot):
 
-    # Average intensity
-    avg_intensity = np.mean(
-        gray
-    )
+    avg_intensity = np.mean(gray)
 
-    # Maximum intensity
-    max_intensity = np.max(
-        gray
-    )
+    max_intensity = np.max(gray)
 
-    # Minimum intensity
-    min_intensity = np.min(
-        gray
-    )
+    min_intensity = np.min(gray)
 
-    # Hotspot area
-    hotspot_pixels = np.sum(
-        hotspot > 0
-    )
+    # Hotspot pixels
+    hotspot_pixels = np.sum(hotspot == 255)
 
     total_pixels = hotspot.size
 
@@ -37,45 +23,18 @@ def analyze_image(
 
     severity = hotspot_percentage
 
-    # ---------------------------------
-    # STATUS
-    # ---------------------------------
-
-    if severity > 25:
+    # Fault logic
+    if hotspot_percentage > 25:
 
         status = "OVERHEATING DETECTED"
 
-    elif severity > 10:
+    elif hotspot_percentage > 10:
 
         status = "MODERATE HEATING"
 
     else:
 
         status = "NORMAL"
-
-    # ---------------------------------
-    # THERMAL CONDITION
-    # ---------------------------------
-
-    if avg_intensity < 80:
-
-        thermal_condition = "COLD"
-
-    elif avg_intensity < 140:
-
-        thermal_condition = "NORMAL"
-
-    elif avg_intensity < 190:
-
-        thermal_condition = "HOT"
-
-    else:
-
-        thermal_condition = "RED HOT / CRITICAL"
-
-    # ---------------------------------
-    # RETURN RESULTS
-    # ---------------------------------
 
     return {
 
@@ -89,7 +48,5 @@ def analyze_image(
 
         "hotspot_percentage": hotspot_percentage,
 
-        "status": status,
-
-        "thermal_condition": thermal_condition
+        "status": status
     }
