@@ -352,7 +352,7 @@ if uploaded_file is not None:
             caption="Hotspot Detection",
             use_container_width=True
         )
-    # ---------------------------------
+     # ---------------------------------
 # HISTOGRAM
 # ---------------------------------
 
@@ -423,6 +423,31 @@ ax_rgb.set_ylabel(
 ax_rgb.legend()
 
 st.pyplot(fig_rgb)
+
+# ---------------------------------
+# RGB MEANING
+# ---------------------------------
+
+st.markdown("""
+
+### RGB Curve Meaning
+
+🔴 **Red Curve**
+- Represents hot regions
+- Higher red peak → higher temperature zones
+- Indicates overheating areas
+
+🟢 **Green Curve**
+- Represents medium temperature regions
+- Transitional thermal areas
+- Moderate heating indication
+
+🔵 **Blue Curve**
+- Represents cooler regions
+- Lower temperature areas
+- Normal/cool bearing surface
+
+""")
 
 # ---------------------------------
 # HOTSPOT ANALYSIS
