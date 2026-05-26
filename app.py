@@ -281,7 +281,7 @@ if uploaded_file is not None:
             f"{dynamic_threshold:.2f}"
         )
 
-# ---------------------------------
+    # ---------------------------------
 # THERMAL CONDITION
 # ---------------------------------
 
@@ -289,34 +289,23 @@ st.subheader(
     "Thermal Condition"
 )
 
-condition = results[
-    "thermal_condition"
-]
+condition = results["thermal_condition"]
 
 if condition == "COLD":
 
-    st.info(
-        condition
-    )
+    st.info(condition)
 
 elif condition == "NORMAL":
 
-    st.success(
-        condition
-    )
+    st.success(condition)
 
 elif condition == "HOT":
 
-    st.warning(
-        condition
-    )
+    st.warning(condition)
 
 else:
 
-    st.error(
-        condition
-    )
-
+    st.error(condition)
     # ---------------------------------
     # SYSTEM STATUS
     # ---------------------------------
