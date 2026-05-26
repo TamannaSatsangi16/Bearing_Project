@@ -138,8 +138,9 @@ if uploaded_file is not None:
     # ---------------------------------
 
     recommendation = get_recommendation(
-        results["status"]
-    )
+    prediction,
+    results["severity"]
+)
 
     # ---------------------------------
     # SAVE HISTORY
