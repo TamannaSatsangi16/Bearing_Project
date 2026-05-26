@@ -480,52 +480,6 @@ if uploaded_file is not None:
         history_data,
         use_container_width=True
     )
-
-    # ---------------------------------
-    # DELETE SINGLE RECORD
-    # ---------------------------------
-    
-    st.subheader(
-        "Delete Single Record"
-    )
-    
-    delete_index = st.number_input(
-    
-        "Enter Row Number to Delete",
-    
-        min_value=0,
-    
-        max_value=max(
-            len(history_data)-1,
-            0
-        ),
-    
-        step=1
-    )
-    
-    if st.button(
-        "Delete Selected Record"
-    ):
-    
-        history_data = history_data.drop(
-            delete_index
-        )
-    
-        history_data = history_data.reset_index(
-            drop=True
-        )
-    
-        history_data.to_csv(
-            "history.csv",
-            index=False
-        )
-    
-        st.success(
-            "Record Deleted Successfully"
-        )
-    
-        st.rerun()
-    
     # ---------------------------------
     # DELETE ALL HISTORY
     # ---------------------------------
