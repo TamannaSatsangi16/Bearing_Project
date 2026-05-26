@@ -351,34 +351,77 @@ if uploaded_file is not None:
             caption="Hotspot Detection",
             use_container_width=True
         )
-
     # ---------------------------------
-    # HISTOGRAM
-    # ---------------------------------
+# HISTOGRAM
+# ---------------------------------
 
-    st.subheader(
-        "Pixel Intensity Histogram"
+st.subheader(
+    "Pixel Intensity Histogram"
+)
+
+fig, ax = plt.subplots(
+    figsize=(8,4)
+)
+
+ax.hist(
+    gray.ravel(),
+    bins=256,
+    color='gray'
+)
+
+ax.set_xlabel(
+    "Pixel Intensity"
+)
+
+ax.set_ylabel(
+    "Frequency"
+)
+
+st.pyplot(fig)
+
+# ---------------------------------
+# RGB CURVE
+# ---------------------------------
+
+st.subheader(
+    "RGB Intensity Curve"
+)
+
+fig_rgb, ax_rgb = plt.subplots(
+    figsize=(8,4)
+)
+
+colors = ('red', 'green', 'blue')
+
+for i, color in enumerate(colors):
+
+    hist = cv2.calcHist(
+        [img_rgb],
+        [i],
+        None,
+        [256],
+        [0,256]
     )
 
-    fig, ax = plt.subplots(
-        figsize=(8,4)
+    ax_rgb.plot(
+        hist,
+        color=color,
+        label=f'{color.upper()} Channel'
     )
 
-    ax.hist(
-        gray.ravel(),
-        bins=256
-    )
+ax_rgb.set_xlim([0,256])
 
-    ax.set_xlabel(
-        "Pixel Intensity"
-    )
+ax_rgb.set_xlabel(
+    "Pixel Intensity"
+)
 
-    ax.set_ylabel(
-        "Frequency"
-    )
+ax_rgb.set_ylabel(
+    "Frequency"
+)
 
-    st.pyplot(fig)
+ax_rgb.legend()
 
+st.pyplot(fig_rgb)
     # ---------------------------------
     # HOTSPOT ANALYSIS
     # ---------------------------------
