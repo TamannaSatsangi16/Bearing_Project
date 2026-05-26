@@ -391,24 +391,103 @@ if uploaded_file is not None:
         f"Hotspot Area Percentage: "
         f"{results['hotspot_percentage']:.2f}%"
     )
-
     # ---------------------------------
-    # ANALYSIS HISTORY
-    # ---------------------------------
+# ANALYSIS HISTORY
+# ---------------------------------
 
-    st.subheader(
-        "Analysis History"
+st.subheader(
+    "Analysis History"
+)
+
+# Load history
+history_data = pd.read_csv(
+    "history.csv"
+)
+
+# Show dataframe
+st.dataframe(
+    history_data,
+    use_container_width=True
+)
+
+# ---------------------------------
+# DELETE SINGLE RECORD
+# ---------------------------------
+
+st.subheader(
+    "Delete Single Record"
+)
+
+delete_index = st.number_input(
+
+    "Enter Row Number to Delete",
+
+    min_value=0,
+
+    max_value=max(
+        len(history_data)-1,
+        0
+    ),
+
+    step=1
+)
+
+if st.button(
+    "Delete Selected Record"
+):
+
+    history_data = history_data.drop(
+        delete_index
     )
 
-    history_data = pd.read_csv(
-        "history.csv"
+    history_data = history_data.reset_index(
+        drop=True
     )
 
-    st.dataframe(
-        history_data,
-        use_container_width=True
+    history_data.to_csv(
+        "history.csv",
+        index=False
     )
 
+    st.success(
+        "Record Deleted Successfully"
+    )
+
+    st.rerun()
+
+# ---------------------------------
+# DELETE ALL HISTORY
+# ---------------------------------
+
+st.subheader(
+    "Delete Entire History"
+)
+
+if st.button(
+    "Delete All Records"
+):
+
+    # Empty dataframe
+    empty_df = pd.DataFrame(columns=[
+        "Timestamp",
+        "Image",
+        "Prediction",
+        "Confidence",
+        "Severity",
+        "Status"
+    ])
+
+    # Save empty CSV
+    empty_df.to_csv(
+        "history.csv",
+        index=False
+    )
+
+    st.success(
+        "All History Deleted Successfully"
+    )
+
+    st.rerun()
     # ---------------------------------
     # FINAL SUCCESS MESSAGE
     # ---------------------------------
