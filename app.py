@@ -78,19 +78,27 @@ uploaded_file = st.file_uploader(
 
 if uploaded_file is not None:
 
-    # Open image
-    image = Image.open(uploaded_file)
+    # ---------------------------------
+    # LOAD IMAGE
+    # ---------------------------------
 
-    # Convert to numpy array
-    img = np.array(image)
+    image = Image.open(
+        uploaded_file
+    )
 
-    # Create uploads folder
+    img = np.array(
+        image
+    )
+
+    # ---------------------------------
+    # CREATE UPLOADS FOLDER
+    # ---------------------------------
+
     os.makedirs(
         "uploads",
         exist_ok=True
     )
 
-    # Save uploaded image
     image_path = f"uploads/{uploaded_file.name}"
 
     with open(
@@ -110,7 +118,6 @@ if uploaded_file is not None:
         img
     )
 
-    # Hotspot detection
     hotspot, dynamic_threshold = detect_hotspots(
         gray,
         sensitivity
@@ -134,11 +141,12 @@ if uploaded_file is not None:
     )
 
     # ---------------------------------
-    # RECOMMENDATION
+    # MAINTENANCE RECOMMENDATION
     # ---------------------------------
 
     recommendation = get_recommendation(
-        results["status"]
+        prediction,
+        results["severity"]
     )
 
     # ---------------------------------
@@ -160,9 +168,13 @@ if uploaded_file is not None:
         "Status": results["status"]
     }
 
-    history_df = pd.DataFrame([history])
+    history_df = pd.DataFrame(
+        [history]
+    )
 
-    if os.path.exists("history.csv"):
+    if os.path.exists(
+        "history.csv"
+    ):
 
         history_df.to_csv(
             "history.csv",
@@ -281,6 +293,42 @@ if uploaded_file is not None:
         )
 
     # ---------------------------------
+    # THERMAL CONDITION
+    # ---------------------------------
+
+    st.subheader(
+        "Thermal Condition"
+    )
+
+    condition = results[
+        "thermal_condition"
+    ]
+
+    if condition == "COLD":
+
+        st.info(
+            condition
+        )
+
+    elif condition == "NORMAL":
+
+        st.success(
+            condition
+        )
+
+    elif condition == "HOT":
+
+        st.warning(
+            condition
+        )
+
+    else:
+
+        st.error(
+            condition
+        )
+
+    # ---------------------------------
     # SYSTEM STATUS
     # ---------------------------------
 
@@ -380,6 +428,105 @@ if uploaded_file is not None:
     st.pyplot(fig)
 
     # ---------------------------------
+    # RGB TEMPERATURE VARIATION CURVES
+    # ---------------------------------
+
+    st.subheader(
+        "RGB Temperature Variation Curves"
+    )
+
+    # Split RGB channels
+    red_channel = img_rgb[:, :, 0]
+
+    green_channel = img_rgb[:, :, 1]
+
+    blue_channel = img_rgb[:, :, 2]
+
+    # Mean intensity curves
+    red_mean = np.mean(
+        red_channel,
+        axis=0
+    )
+
+    green_mean = np.mean(
+        green_channel,
+        axis=0
+    )
+
+    blue_mean = np.mean(
+        blue_channel,
+        axis=0
+    )
+
+    # Create plots
+    fig2, axes = plt.subplots(
+        1,
+        3,
+        figsize=(15,4)
+    )
+
+    # RED
+    axes[0].plot(
+        red_mean
+    )
+
+    axes[0].set_title(
+        "Red Mean"
+    )
+
+    axes[0].set_xlabel(
+        "Position"
+    )
+
+    axes[0].set_ylabel(
+        "Intensity"
+    )
+
+    axes[0].grid(True)
+
+    # GREEN
+    axes[1].plot(
+        green_mean
+    )
+
+    axes[1].set_title(
+        "Green Mean"
+    )
+
+    axes[1].set_xlabel(
+        "Position"
+    )
+
+    axes[1].set_ylabel(
+        "Intensity"
+    )
+
+    axes[1].grid(True)
+
+    # BLUE
+    axes[2].plot(
+        blue_mean
+    )
+
+    axes[2].set_title(
+        "Blue Mean"
+    )
+
+    axes[2].set_xlabel(
+        "Position"
+    )
+
+    axes[2].set_ylabel(
+        "Intensity"
+    )
+
+    axes[2].grid(True)
+
+    st.pyplot(
+        fig2
+    )
+
+    # ---------------------------------
     # HOTSPOT ANALYSIS
     # ---------------------------------
 
@@ -391,7 +538,12 @@ if uploaded_file is not None:
         f"Hotspot Area Percentage: "
         f"{results['hotspot_percentage']:.2f}%"
     )
-    # ---------------------------------
+
+    st.success(
+        "Analysis Completed Successfully"
+    )
+
+# ---------------------------------
 # ANALYSIS HISTORY
 # ---------------------------------
 
@@ -399,99 +551,105 @@ st.subheader(
     "Analysis History"
 )
 
-# Load history
-history_data = pd.read_csv(
+if os.path.exists(
     "history.csv"
-)
-
-# Show dataframe
-st.dataframe(
-    history_data,
-    use_container_width=True
-)
-
-# ---------------------------------
-# DELETE SINGLE RECORD
-# ---------------------------------
-
-st.subheader(
-    "Delete Single Record"
-)
-
-delete_index = st.number_input(
-
-    "Enter Row Number to Delete",
-
-    min_value=0,
-
-    max_value=max(
-        len(history_data)-1,
-        0
-    ),
-
-    step=1
-)
-
-if st.button(
-    "Delete Selected Record"
 ):
 
-    history_data = history_data.drop(
-        delete_index
+    history_data = pd.read_csv(
+        "history.csv"
     )
 
-    history_data = history_data.reset_index(
-        drop=True
-    )
-
-    history_data.to_csv(
-        "history.csv",
-        index=False
-    )
-
-    st.success(
-        "Record Deleted Successfully"
-    )
-
-    st.rerun()
-
-# ---------------------------------
-# DELETE ALL HISTORY
-# ---------------------------------
-
-st.subheader(
-    "Delete Entire History"
-)
-
-if st.button(
-    "Delete All Records"
-):
-
-    # Empty dataframe
-    empty_df = pd.DataFrame(columns=[
-        "Timestamp",
-        "Image",
-        "Prediction",
-        "Confidence",
-        "Severity",
-        "Status"
-    ])
-
-    # Save empty CSV
-    empty_df.to_csv(
-        "history.csv",
-        index=False
-    )
-
-    st.success(
-        "All History Deleted Successfully"
-    )
-
-    st.rerun()
     # ---------------------------------
-    # FINAL SUCCESS MESSAGE
+    # DELETE ALL BUTTON
     # ---------------------------------
 
-    st.success(
-        "Analysis Completed Successfully"
+    if st.button(
+        "🗑️ Delete All History"
+    ):
+
+        empty_df = pd.DataFrame(columns=[
+            "Timestamp",
+            "Image",
+            "Prediction",
+            "Confidence",
+            "Severity",
+            "Status"
+        ])
+
+        empty_df.to_csv(
+            "history.csv",
+            index=False
+        )
+
+        st.rerun()
+
+    st.write("---")
+
+    # ---------------------------------
+    # TABLE HEADER
+    # ---------------------------------
+
+    h1, h2, h3, h4, h5, h6 = st.columns(
+        [2,2,2,2,2,1]
     )
+
+    h1.write("Timestamp")
+    h2.write("Image")
+    h3.write("Prediction")
+    h4.write("Confidence")
+    h5.write("Severity")
+    h6.write("Delete")
+
+    st.write("---")
+
+    # ---------------------------------
+    # SHOW HISTORY ROWS
+    # ---------------------------------
+
+    for index, row in history_data.iterrows():
+
+        c1, c2, c3, c4, c5, c6 = st.columns(
+            [2,2,2,2,2,1]
+        )
+
+        c1.write(
+            row["Timestamp"]
+        )
+
+        c2.write(
+            row["Image"]
+        )
+
+        c3.write(
+            row["Prediction"]
+        )
+
+        c4.write(
+            row["Confidence"]
+        )
+
+        c5.write(
+            row["Severity"]
+        )
+
+        # DELETE BUTTON
+
+        if c6.button(
+            "🗑️",
+            key=f"delete_{index}"
+        ):
+
+            history_data = history_data.drop(
+                index
+            )
+
+            history_data = history_data.reset_index(
+                drop=True
+            )
+
+            history_data.to_csv(
+                "history.csv",
+                index=False
+            )
+
+            st.rerun()
