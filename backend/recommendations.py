@@ -1,23 +1,71 @@
 # ---------------------------------
-# MAINTENANCE RECOMMENDATIONS
+# MAINTENANCE RECOMMENDATION
 # ---------------------------------
 
-def get_recommendation(status):
+def get_recommendation(
+    prediction,
+    severity
+):
 
-    if status == "OVERHEATING DETECTED":
+    # ---------------------------------
+    # HEALTHY
+    # ---------------------------------
+
+    if prediction == "Healthy":
+
+        if severity < 10:
+
+            return (
+                "Bearing operating normally. "
+                "Continue routine monitoring."
+            )
+
+        else:
+
+            return (
+                "Minor thermal variation detected. "
+                "Schedule preventive inspection."
+            )
+
+    # ---------------------------------
+    # OLD USED
+    # ---------------------------------
+
+    elif prediction == "Old Used Bearing":
 
         return (
-            "Inspect lubrication and cooling system immediately"
+            "Bearing wear detected. "
+            "Lubrication and vibration inspection recommended."
         )
 
-    elif status == "MODERATE HEATING":
+    # ---------------------------------
+    # IRON SCRAP
+    # ---------------------------------
+
+    elif prediction == "Iron Scrap Bearing":
 
         return (
-            "Monitor bearing condition regularly"
+            "Severe bearing damage detected. "
+            "Immediate replacement recommended."
         )
+
+    # ---------------------------------
+    # BALL DEFECT
+    # ---------------------------------
+
+    elif prediction == "Ball Defect Bearing":
+
+        return (
+            "Ball defect detected. "
+            "Check rolling elements and replace bearing immediately."
+        )
+
+    # ---------------------------------
+    # DEFAULT
+    # ---------------------------------
 
     else:
 
         return (
-            "Bearing condition is healthy"
+            "Further inspection required."
         )
