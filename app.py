@@ -1,9 +1,8 @@
 import streamlit as st
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from PIL import Image
-import pandas as pd
-from datetime import datetime
 import os
 
 # ---------------------------------
@@ -12,19 +11,20 @@ import os
 
 from backend.image_processing import (
     process_image,
-    detect_hotspots
+    detect_hotspots,
+    detect_edges
 )
 
 from backend.analysis import (
     analyze_image
 )
 
-from backend.recommendations import (
-    get_recommendation
-)
-
 from backend.predict import (
     predict_bearing
+)
+
+from backend.recommendations import (
+    get_recommendation
 )
 
 # ---------------------------------
@@ -73,44 +73,32 @@ uploaded_file = st.file_uploader(
 )
 
 # ---------------------------------
-# MAIN PROCESSING
+# PROCESS IMAGE
 # ---------------------------------
 
 if uploaded_file is not None:
 
-    # Open image
-    image = Image.open(uploaded_file)
-
-    # Convert to numpy array
-    img = np.array(image)
-
-    # Create uploads folder
-    os.makedirs(
-        "uploads",
-        exist_ok=True
+    # Read image
+    image = Image.open(
+        uploaded_file
     )
 
-    # Save uploaded image
-    image_path = f"uploads/{uploaded_file.name}"
-
-    with open(
-        image_path,
-        "wb"
-    ) as f:
-
-        f.write(
-            uploaded_file.getbuffer()
-        )
+    image_np = np.array(
+        image
+    )
 
     # ---------------------------------
     # IMAGE PROCESSING
     # ---------------------------------
 
-    img_rgb, gray, edges = process_image(
-        img
+    gray = process_image(
+        image_np
     )
 
-    # Hotspot detection
+    edges = detect_edges(
+        gray
+    )
+
     hotspot, dynamic_threshold = detect_hotspots(
         gray,
         sensitivity
@@ -130,111 +118,24 @@ if uploaded_file is not None:
     # ---------------------------------
 
     prediction, confidence = predict_bearing(
-        img_rgb
+        image_np
     )
 
     # ---------------------------------
-    # RECOMMENDATION
-    # ---------------------------------
-
-    recommendation = get_recommendation(
-    prediction,
-    results["severity"]
-)
-
-    # ---------------------------------
-    # SAVE HISTORY
-    # ---------------------------------
-
-    history = {
-
-        "Timestamp": datetime.now(),
-
-        "Image": uploaded_file.name,
-
-        "Prediction": prediction,
-
-        "Confidence": confidence,
-
-        "Severity": results["severity"],
-
-        "Status": results["status"]
-    }
-
-    history_df = pd.DataFrame([history])
-
-    if os.path.exists("history.csv"):
-
-        history_df.to_csv(
-            "history.csv",
-            mode='a',
-            header=False,
-            index=False
-        )
-
-    else:
-
-        history_df.to_csv(
-            "history.csv",
-            index=False
-        )
-
-    # ---------------------------------
-    # ORIGINAL IMAGE
-    # ---------------------------------
-
-    st.subheader(
-        "Original Thermal Image"
-    )
-
-    st.image(
-        img_rgb,
-        use_container_width=True
-    )
-
-    # ---------------------------------
-    # AI PREDICTION
+    # AI PREDICTION DISPLAY
     # ---------------------------------
 
     st.subheader(
         "AI Prediction"
     )
 
-    st.write(
+    st.success(
         f"Prediction Result: {prediction}"
     )
 
-    st.write(
+    st.info(
         f"Confidence: {confidence:.2f}%"
     )
-
-    # ---------------------------------
-    # PREDICTION STATUS
-    # ---------------------------------
-
-    if prediction == "Healthy":
-
-        st.success(
-            "HEALTHY BEARING"
-        )
-
-    elif prediction == "Old Used Bearing":
-
-        st.warning(
-            "OLD USED BEARING DETECTED"
-        )
-
-    elif prediction == "Iron Scrap Bearing":
-
-        st.error(
-            "IRON SCRAP / DAMAGED BEARING DETECTED"
-        )
-
-    elif prediction == "Ball Defect Bearing":
-
-        st.error(
-            "BALL DEFECT DETECTED"
-        )
 
     # ---------------------------------
     # ANALYSIS METRICS
@@ -246,66 +147,67 @@ if uploaded_file is not None:
 
     col1, col2, col3, col4, col5 = st.columns(5)
 
-    with col1:
+    col1.metric(
+        "Average Intensity",
+        f"{results['avg_intensity']:.2f}"
+    )
 
-        st.metric(
-            "Average Intensity",
-            f"{results['avg_intensity']:.2f}"
-        )
+    col2.metric(
+        "Maximum Intensity",
+        f"{results['max_intensity']}"
+    )
 
-    with col2:
+    col3.metric(
+        "Minimum Intensity",
+        f"{results['min_intensity']}"
+    )
 
-        st.metric(
-            "Maximum Intensity",
-            f"{results['max_intensity']}"
-        )
+    col4.metric(
+        "Severity %",
+        f"{results['severity']:.2f}%"
+    )
 
-    with col3:
-
-        st.metric(
-            "Minimum Intensity",
-            f"{results['min_intensity']}"
-        )
-
-    with col4:
-
-        st.metric(
-            "Severity %",
-            f"{results['severity']:.2f}%"
-        )
-
-    with col5:
-
-        st.metric(
-            "Dynamic Threshold",
-            f"{dynamic_threshold:.2f}"
-        )
+    col5.metric(
+        "Dynamic Threshold",
+        f"{dynamic_threshold:.2f}"
+    )
 
     # ---------------------------------
-# THERMAL CONDITION
-# ---------------------------------
+    # THERMAL CONDITION
+    # ---------------------------------
 
-st.subheader(
-    "Thermal Condition"
-)
+    st.subheader(
+        "Thermal Condition"
+    )
 
-condition = results["thermal_condition"]
+    condition = results[
+        "thermal_condition"
+    ]
 
-if condition == "COLD":
+    if condition == "COLD":
 
-    st.info(condition)
+        st.info(
+            condition
+        )
 
-elif condition == "NORMAL":
+    elif condition == "NORMAL":
 
-    st.success(condition)
+        st.success(
+            condition
+        )
 
-elif condition == "HOT":
+    elif condition == "HOT":
 
-    st.warning(condition)
+        st.warning(
+            condition
+        )
 
-else:
+    else:
 
-    st.error(condition)
+        st.error(
+            condition
+        )
+
     # ---------------------------------
     # SYSTEM STATUS
     # ---------------------------------
@@ -314,9 +216,9 @@ else:
         "System Status"
     )
 
-    if results["status"] == "OVERHEATING DETECTED":
+    if results["status"] == "NORMAL":
 
-        st.error(
+        st.success(
             results["status"]
         )
 
@@ -328,13 +230,18 @@ else:
 
     else:
 
-        st.success(
+        st.error(
             results["status"]
         )
 
     # ---------------------------------
     # MAINTENANCE RECOMMENDATION
     # ---------------------------------
+
+    recommendation = get_recommendation(
+        prediction,
+        results["severity"]
+    )
 
     st.subheader(
         "Maintenance Recommendation"
@@ -345,7 +252,7 @@ else:
     )
 
     # ---------------------------------
-    # IMAGE PROCESSING RESULTS
+    # IMAGE PROCESSING DISPLAY
     # ---------------------------------
 
     st.subheader(
@@ -386,13 +293,11 @@ else:
         "Pixel Intensity Histogram"
     )
 
-    fig, ax = plt.subplots(
-        figsize=(8,4)
-    )
+    fig, ax = plt.subplots()
 
     ax.hist(
         gray.ravel(),
-        bins=256
+        bins=50
     )
 
     ax.set_xlabel(
@@ -403,21 +308,57 @@ else:
         "Frequency"
     )
 
-    st.pyplot(fig)
-
-    # ---------------------------------
-    # HOTSPOT ANALYSIS
-    # ---------------------------------
-
-    st.subheader(
-        "Hotspot Analysis"
+    st.pyplot(
+        fig
     )
 
-    st.write(
-        f"Hotspot Area Percentage: "
-        f"{results['hotspot_percentage']:.2f}%"
-    )
     # ---------------------------------
+    # SAVE HISTORY
+    # ---------------------------------
+
+    history_entry = {
+
+        "Image": uploaded_file.name,
+
+        "Prediction": prediction,
+
+        "Confidence": confidence,
+
+        "Severity": results["severity"],
+
+        "Status": results["status"]
+    }
+
+    history_df = pd.DataFrame(
+        [history_entry]
+    )
+
+    if os.path.exists(
+        "history.csv"
+    ):
+
+        old_history = pd.read_csv(
+            "history.csv"
+        )
+
+        updated_history = pd.concat(
+            [old_history, history_df],
+            ignore_index=True
+        )
+
+        updated_history.to_csv(
+            "history.csv",
+            index=False
+        )
+
+    else:
+
+        history_df.to_csv(
+            "history.csv",
+            index=False
+        )
+
+# ---------------------------------
 # ANALYSIS HISTORY
 # ---------------------------------
 
@@ -425,99 +366,106 @@ st.subheader(
     "Analysis History"
 )
 
-# Load history
-history_data = pd.read_csv(
+if os.path.exists(
     "history.csv"
-)
-
-# Show dataframe
-st.dataframe(
-    history_data,
-    use_container_width=True
-)
-
-# ---------------------------------
-# DELETE SINGLE RECORD
-# ---------------------------------
-
-st.subheader(
-    "Delete Single Record"
-)
-
-delete_index = st.number_input(
-
-    "Enter Row Number to Delete",
-
-    min_value=0,
-
-    max_value=max(
-        len(history_data)-1,
-        0
-    ),
-
-    step=1
-)
-
-if st.button(
-    "Delete Selected Record"
 ):
 
-    history_data = history_data.drop(
-        delete_index
+    history_data = pd.read_csv(
+        "history.csv"
     )
 
-    history_data = history_data.reset_index(
-        drop=True
-    )
-
-    history_data.to_csv(
-        "history.csv",
-        index=False
-    )
-
-    st.success(
-        "Record Deleted Successfully"
-    )
-
-    st.rerun()
-
-# ---------------------------------
-# DELETE ALL HISTORY
-# ---------------------------------
-
-st.subheader(
-    "Delete Entire History"
-)
-
-if st.button(
-    "Delete All Records"
-):
-
-    # Empty dataframe
-    empty_df = pd.DataFrame(columns=[
-        "Timestamp",
-        "Image",
-        "Prediction",
-        "Confidence",
-        "Severity",
-        "Status"
-    ])
-
-    # Save empty CSV
-    empty_df.to_csv(
-        "history.csv",
-        index=False
-    )
-
-    st.success(
-        "All History Deleted Successfully"
-    )
-
-    st.rerun()
     # ---------------------------------
-    # FINAL SUCCESS MESSAGE
+    # DELETE ALL BUTTON
     # ---------------------------------
 
-    st.success(
-        "Analysis Completed Successfully"
+    if st.button(
+        "🗑️ Delete All History"
+    ):
+
+        empty_df = pd.DataFrame(columns=[
+            "Image",
+            "Prediction",
+            "Confidence",
+            "Severity",
+            "Status"
+        ])
+
+        empty_df.to_csv(
+            "history.csv",
+            index=False
+        )
+
+        st.rerun()
+
+    st.write("---")
+
+    # ---------------------------------
+    # TABLE HEADER
+    # ---------------------------------
+
+    h1, h2, h3, h4, h5, h6 = st.columns(
+        [2,2,2,2,2,1]
     )
+
+    h1.write("Image")
+    h2.write("Prediction")
+    h3.write("Confidence")
+    h4.write("Severity")
+    h5.write("Status")
+    h6.write("Delete")
+
+    st.write("---")
+
+    # ---------------------------------
+    # SHOW ROWS
+    # ---------------------------------
+
+    for index, row in history_data.iterrows():
+
+        c1, c2, c3, c4, c5, c6 = st.columns(
+            [2,2,2,2,2,1]
+        )
+
+        c1.write(
+            row["Image"]
+        )
+
+        c2.write(
+            row["Prediction"]
+        )
+
+        c3.write(
+            row["Confidence"]
+        )
+
+        c4.write(
+            row["Severity"]
+        )
+
+        c5.write(
+            row["Status"]
+        )
+
+        # ---------------------------------
+        # DELETE BUTTON
+        # ---------------------------------
+
+        if c6.button(
+            "🗑️",
+            key=f"delete_{index}"
+        ):
+
+            history_data = history_data.drop(
+                index
+            )
+
+            history_data = history_data.reset_index(
+                drop=True
+            )
+
+            history_data.to_csv(
+                "history.csv",
+                index=False
+            )
+
+            st.rerun()
