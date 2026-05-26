@@ -353,216 +353,216 @@ if uploaded_file is not None:
             use_container_width=True
         )
      # ---------------------------------
-# HISTOGRAM
-# ---------------------------------
+     # HISTOGRAM
+     # ---------------------------------
 
-st.subheader(
-    "Pixel Intensity Histogram"
-)
-
-fig, ax = plt.subplots(
-    figsize=(8,4)
-)
-
-ax.hist(
-    gray.ravel(),
-    bins=256,
-    color='gray'
-)
-
-ax.set_xlabel(
-    "Pixel Intensity"
-)
-
-ax.set_ylabel(
-    "Frequency"
-)
-
-st.pyplot(fig)
-
-# ---------------------------------
-# RGB CURVE
-# ---------------------------------
-
-st.subheader(
-    "RGB Intensity Curve"
-)
-
-fig_rgb, ax_rgb = plt.subplots(
-    figsize=(8,4)
-)
-
-colors = ('red', 'green', 'blue')
-
-for i, color in enumerate(colors):
-
-    hist = cv2.calcHist(
-        [img_rgb],
-        [i],
-        None,
-        [256],
-        [0,256]
+    st.subheader(
+        "Pixel Intensity Histogram"
     )
-
-    ax_rgb.plot(
-        hist,
-        color=color,
-        label=f'{color.upper()} Channel'
+    
+    fig, ax = plt.subplots(
+        figsize=(8,4)
     )
-
-ax_rgb.set_xlim([0,256])
-
-ax_rgb.set_xlabel(
-    "Pixel Intensity"
-)
-
-ax_rgb.set_ylabel(
-    "Frequency"
-)
-
-ax_rgb.legend()
-
-st.pyplot(fig_rgb)
-
-# ---------------------------------
-# RGB MEANING
-# ---------------------------------
-
-st.markdown("""
-
-### RGB Curve Meaning
-
-🔴 **Red Curve**
-- Represents hot regions
-- Higher red peak → higher temperature zones
-- Indicates overheating areas
-
-🟢 **Green Curve**
-- Represents medium temperature regions
-- Transitional thermal areas
-- Moderate heating indication
-
-🔵 **Blue Curve**
-- Represents cooler regions
-- Lower temperature areas
-- Normal/cool bearing surface
-
-""")
-
-# ---------------------------------
-# HOTSPOT ANALYSIS
-# ---------------------------------
-
-st.subheader(
-    "Hotspot Analysis"
-)
-
-st.write(
-    f"Hotspot Area Percentage: "
-    f"{results['hotspot_percentage']:.2f}%"
-)
+    
+    ax.hist(
+        gray.ravel(),
+        bins=256,
+        color='gray'
+    )
+    
+    ax.set_xlabel(
+        "Pixel Intensity"
+    )
+    
+    ax.set_ylabel(
+        "Frequency"
+    )
+    
+    st.pyplot(fig)
+    
+    # ---------------------------------
+    # RGB CURVE
+    # ---------------------------------
+    
+    st.subheader(
+        "RGB Intensity Curve"
+    )
+    
+    fig_rgb, ax_rgb = plt.subplots(
+        figsize=(8,4)
+    )
+    
+    colors = ('red', 'green', 'blue')
+    
+    for i, color in enumerate(colors):
+    
+        hist = cv2.calcHist(
+            [img_rgb],
+            [i],
+            None,
+            [256],
+            [0,256]
+        )
+    
+        ax_rgb.plot(
+            hist,
+            color=color,
+            label=f'{color.upper()} Channel'
+        )
+    
+    ax_rgb.set_xlim([0,256])
+    
+    ax_rgb.set_xlabel(
+        "Pixel Intensity"
+    )
+    
+    ax_rgb.set_ylabel(
+        "Frequency"
+    )
+    
+    ax_rgb.legend()
+    
+    st.pyplot(fig_rgb)
+    
+    # ---------------------------------
+    # RGB MEANING
+    # ---------------------------------
+    
+    st.markdown("""
+    
+    ### RGB Curve Meaning
+    
+    🔴 **Red Curve**
+    - Represents hot regions
+    - Higher red peak → higher temperature zones
+    - Indicates overheating areas
+    
+    🟢 **Green Curve**
+    - Represents medium temperature regions
+    - Transitional thermal areas
+    - Moderate heating indication
+    
+    🔵 **Blue Curve**
+    - Represents cooler regions
+    - Lower temperature areas
+    - Normal/cool bearing surface
+    
+    """)
+    
+    # ---------------------------------
+    # HOTSPOT ANALYSIS
+    # ---------------------------------
+    
+    st.subheader(
+        "Hotspot Analysis"
+    )
+    
+    st.write(
+        f"Hotspot Area Percentage: "
+        f"{results['hotspot_percentage']:.2f}%"
+    )
 
     # ---------------------------------
-# ANALYSIS HISTORY
-# ---------------------------------
-
-st.subheader(
-    "Analysis History"
-)
-
-# Load history
-history_data = pd.read_csv(
-    "history.csv"
-)
-
-# Show dataframe
-st.dataframe(
-    history_data,
-    use_container_width=True
-)
-
-# ---------------------------------
-# DELETE SINGLE RECORD
-# ---------------------------------
-
-st.subheader(
-    "Delete Single Record"
-)
-
-delete_index = st.number_input(
-
-    "Enter Row Number to Delete",
-
-    min_value=0,
-
-    max_value=max(
-        len(history_data)-1,
-        0
-    ),
-
-    step=1
-)
-
-if st.button(
-    "Delete Selected Record"
-):
-
-    history_data = history_data.drop(
-        delete_index
-    )
-
-    history_data = history_data.reset_index(
-        drop=True
-    )
-
-    history_data.to_csv(
-        "history.csv",
-        index=False
-    )
-
-    st.success(
-        "Record Deleted Successfully"
-    )
-
-    st.rerun()
-
-# ---------------------------------
-# DELETE ALL HISTORY
-# ---------------------------------
-
-st.subheader(
-    "Delete Entire History"
-)
-
-if st.button(
-    "Delete All Records"
-):
-
-    # Empty dataframe
-    empty_df = pd.DataFrame(columns=[
-        "Timestamp",
-        "Image",
-        "Prediction",
-        "Confidence",
-        "Severity",
-        "Status"
-    ])
-
-    # Save empty CSV
-    empty_df.to_csv(
-        "history.csv",
-        index=False
-    )
-
-    st.success(
-        "All History Deleted Successfully"
-    )
-
-    st.rerun()
+    # ANALYSIS HISTORY
     # ---------------------------------
-    # FINAL SUCCESS MESSAGE
-    # ---------------------------------
-
-    st.success(
-        "Analysis Completed Successfully"
+    
+    st.subheader(
+        "Analysis History"
     )
+    
+    # Load history
+    history_data = pd.read_csv(
+        "history.csv"
+    )
+    
+    # Show dataframe
+    st.dataframe(
+        history_data,
+        use_container_width=True
+    )
+
+    # ---------------------------------
+    # DELETE SINGLE RECORD
+    # ---------------------------------
+    
+    st.subheader(
+        "Delete Single Record"
+    )
+    
+    delete_index = st.number_input(
+    
+        "Enter Row Number to Delete",
+    
+        min_value=0,
+    
+        max_value=max(
+            len(history_data)-1,
+            0
+        ),
+    
+        step=1
+    )
+    
+    if st.button(
+        "Delete Selected Record"
+    ):
+    
+        history_data = history_data.drop(
+            delete_index
+        )
+    
+        history_data = history_data.reset_index(
+            drop=True
+        )
+    
+        history_data.to_csv(
+            "history.csv",
+            index=False
+        )
+    
+        st.success(
+            "Record Deleted Successfully"
+        )
+    
+        st.rerun()
+    
+    # ---------------------------------
+    # DELETE ALL HISTORY
+    # ---------------------------------
+    
+    st.subheader(
+        "Delete Entire History"
+    )
+    
+    if st.button(
+        "Delete All Records"
+    ):
+    
+        # Empty dataframe
+        empty_df = pd.DataFrame(columns=[
+            "Timestamp",
+            "Image",
+            "Prediction",
+            "Confidence",
+            "Severity",
+            "Status"
+        ])
+    
+        # Save empty CSV
+        empty_df.to_csv(
+            "history.csv",
+            index=False
+        )
+    
+        st.success(
+            "All History Deleted Successfully"
+        )
+    
+        st.rerun()
+        # ---------------------------------
+        # FINAL SUCCESS MESSAGE
+        # ---------------------------------
+    
+        st.success(
+            "Analysis Completed Successfully"
+        )
