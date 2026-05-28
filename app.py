@@ -383,72 +383,160 @@ if uploaded_file is not None:
     # ---------------------------------
     # RGB CURVE
     # ---------------------------------
-    
+
     st.subheader(
         "RGB Intensity Curve"
     )
-    
+
     fig_rgb, ax_rgb = plt.subplots(
         figsize=(8,4)
     )
-    
-    colors = ('red', 'green', 'blue')
-    
-    for i, color in enumerate(colors):
-    
-        hist = cv2.calcHist(
-            [img_rgb],
-            [i],
-            None,
-            [256],
-            [0,256]
-        )
-    
-        ax_rgb.plot(
-            hist,
-            color=color,
-            label=f'{color.upper()} Channel'
-        )
-    
+
+    # RGB Histograms
+    red_hist = cv2.calcHist(
+        [img_rgb],
+        [0],
+        None,
+        [256],
+        [0,256]
+    )
+
+    green_hist = cv2.calcHist(
+        [img_rgb],
+        [1],
+        None,
+        [256],
+        [0,256]
+    )
+
+    blue_hist = cv2.calcHist(
+        [img_rgb],
+        [2],
+        None,
+        [256],
+        [0,256]
+    )
+
+    # Plot Curves
+    ax_rgb.plot(
+        red_hist,
+        color='red',
+        label='RED Channel'
+    )
+
+    ax_rgb.plot(
+        green_hist,
+        color='green',
+        label='GREEN Channel'
+    )
+
+    ax_rgb.plot(
+        blue_hist,
+        color='blue',
+        label='BLUE Channel'
+    )
+
     ax_rgb.set_xlim([0,256])
-    
+
     ax_rgb.set_xlabel(
         "Pixel Intensity"
     )
-    
+
     ax_rgb.set_ylabel(
-        "Frequency"
+        "Pixel Count"
     )
-    
+
     ax_rgb.legend()
-    
+
     st.pyplot(fig_rgb)
-    
+
+    # ---------------------------------
+    # MAX VALUES
+    # ---------------------------------
+
+    red_max = int(np.max(red_hist))
+
+    green_max = int(np.max(green_hist))
+
+    blue_max = int(np.max(blue_hist))
+
+    st.subheader(
+        "Maximum RGB Values"
+    )
+
+    colr1, colr2, colr3 = st.columns(3)
+
+    with colr1:
+
+        st.metric(
+            "🔴 Red Max",
+            red_max
+        )
+
+    with colr2:
+
+        st.metric(
+            "🟢 Green Max",
+            green_max
+        )
+
+    with colr3:
+
+        st.metric(
+            "🔵 Blue Max",
+            blue_max
+        )
+
+    # ---------------------------------
+    # RGB VALUES TABLE
+    # ---------------------------------
+
+    st.subheader(
+        "RGB Curve Values Table"
+    )
+
+    rgb_table = pd.DataFrame({
+
+        "Pixel Intensity": list(range(256)),
+
+        "Red": red_hist.flatten(),
+
+        "Green": green_hist.flatten(),
+
+        "Blue": blue_hist.flatten()
+
+    })
+    st.dataframe(
+        rgb_table,
+        use_container_width=True,
+        hide_index=True
+    )
+
     # ---------------------------------
     # RGB MEANING
     # ---------------------------------
-    
+
     st.markdown("""
-    
+
     ### RGB Curve Meaning
-    
+
     🔴 **Red Curve**
     - Represents hot regions
     - Higher red peak → higher temperature zones
     - Indicates overheating areas
-    
+
     🟢 **Green Curve**
     - Represents medium temperature regions
     - Transitional thermal areas
     - Moderate heating indication
-    
+
     🔵 **Blue Curve**
     - Represents cooler regions
     - Lower temperature areas
     - Normal/cool bearing surface
-    
+
     """)
-    
+
     # ---------------------------------
     # HOTSPOT ANALYSIS
     # ---------------------------------
